@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FunkPhonic - Voice Cloning App</title>
-  <!-- Tailwind CSS CDN for styling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FunkPhonic</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #151515; /* Funkulture black */
-      color: #FFFFFF;
+      background-color: #151515;
+      color: #ffffff;
       margin: 0;
       padding: 20px;
       display: flex;
@@ -21,27 +20,27 @@
     .container {
       background-color: #1a1a1a;
       padding: 30px;
-      border-radius: 15px;
+      border-radius: 20px;
       width: 100%;
       max-width: 600px;
-      box-shadow: 0 0 20px #7a1Fa2; /* Purple glow */
+      box-shadow: 0 0 20px #7a1fa2;
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
     textarea {
-      resize: vertical;
-      min-height: 120px;
       background-color: #242424;
-      color: #FFFFFF;
-      border: 2px solid #7a1Fa2;
+      color: #ffffff;
+      border: 2px solid #7a1fa2;
       border-radius: 10px;
       padding: 15px;
       font-size: 1rem;
+      resize: vertical;
+      min-height: 120px;
       outline: none;
     }
     select, button {
-      background-color: #7a1Fa2;
+      background-color: #7a1fa2;
       color: white;
       border: none;
       border-radius: 10px;
@@ -52,14 +51,14 @@
     }
     select:focus, button:focus {
       outline: none;
-      box-shadow: 0 0 10px #DF5086; /* Heliconia pink glow */
+      box-shadow: 0 0 10px #df5086;
     }
     button:hover {
-      background-color: #DF5086; /* Heliconia pink */
+      background-color: #df5086;
     }
     .loading-spinner {
       border: 4px solid rgba(255, 255, 255, 0.3);
-      border-left-color: #24B3A8; /* Turquoise */
+      border-left-color: #24b3a8;
       border-radius: 50%;
       width: 24px;
       height: 24px;
@@ -74,12 +73,11 @@
       100% { transform: rotate(360deg); }
     }
     #message-box {
-      background-color: #FFFF7227; /* Funkulture orange transparent */
+      background-color: #ffff7227;
       color: #151515;
       padding: 15px;
       border-radius: 10px;
       text-align: center;
-      min-height: 40px;
       font-weight: 600;
       display: none;
     }
@@ -89,22 +87,18 @@
   <div class="container">
     <h1 class="text-4xl font-bold text-white text-center">FunkPhonic</h1>
 
-    <textarea
-      id="text-input"
-      placeholder="Enter text here to speak or generate..."
-      spellcheck="false"
-    ></textarea>
+    <textarea id="text-input" placeholder="Type something Funky..." spellcheck="false"></textarea>
 
-    <div style="display:flex; gap: 15px; align-items: center;">
-      <label for="voice-select" style="flex-shrink:0;">Select Voice:</label>
-      <select id="voice-select" style="flex-grow:1;"></select>
+    <div class="flex flex-col gap-2">
+      <label for="voice-select">Select Voice:</label>
+      <select id="voice-select"></select>
     </div>
 
-    <div style="display:flex; gap: 15px; justify-content: center; margin-top: 15px;">
-      <button id="speak-button">Speak Text</button>
-      <button id="stop-button">Stop Speaking</button>
-      <button id="generate-button" style="position:relative; display:flex; align-items:center; justify-content:center;">
-        Generate Text
+    <div class="flex flex-wrap gap-3 justify-center mt-2">
+      <button id="speak-button">🎤 Speak It</button>
+      <button id="stop-button">🛑 Stop</button>
+      <button id="generate-button" class="flex items-center justify-center">
+        🔮 Generate
         <span id="loading-spinner" class="loading-spinner"></span>
       </button>
     </div>
@@ -123,16 +117,19 @@
     const synth = window.speechSynthesis;
     let voices = [];
 
-    function showMessage(message, duration = 4000) {
+    function showMessage(msg, duration = 4000) {
+      messageBox.textContent = msg;
       messageBox.style.display = 'block';
-      messageBox.textContent = message;
       setTimeout(() => {
         messageBox.style.display = 'none';
       }, duration);
     }
 
     function populateVoiceList() {
-      voices = synth.getVoices();
+      voices = synth.getVoices().filter(v =>
+        v.name && v.lang && (v.default || v.localService || v.name.includes("Google"))
+      );
+
       voiceSelect.innerHTML = '';
       voices.forEach(voice => {
         const option = document.createElement('option');
@@ -140,61 +137,53 @@
         option.value = voice.name;
         voiceSelect.appendChild(option);
       });
-      // Select default voice if available
-      const defaultVoice = voices.find(v => v.default) || voices[0];
-      if (defaultVoice) voiceSelect.value = defaultVoice.name;
+
+      const preferred = voices.find(v => v.name.includes('Google') || v.lang.startsWith('en'));
+      if (preferred) voiceSelect.value = preferred.name;
+
+      showMessage(`🎧 Loaded ${voices.length} voices`);
     }
 
     function speakText() {
-      if (synth.speaking) {
-        synth.cancel();
-      }
+      if (synth.speaking) synth.cancel();
       const text = textInput.value.trim();
-      if (!text) {
-        showMessage('Enter some text first!');
-        return;
-      }
-      const utterance = new SpeechSynthesisUtterance(text);
-      const selectedVoice = voices.find(v => v.name === voiceSelect.value);
-      if (selectedVoice) utterance.voice = selectedVoice;
-      utterance.onend = () => showMessage('Done speaking!');
-      utterance.onerror = e => showMessage('Speech error: ' + e.error);
-      synth.speak(utterance);
-      showMessage('Speaking...');
+      if (!text) return showMessage('⚠️ Enter something first!');
+      const utter = new SpeechSynthesisUtterance(text);
+      const selected = voices.find(v => v.name === voiceSelect.value);
+      if (selected) utter.voice = selected;
+      utter.onend = () => showMessage('✅ Done speaking!');
+      utter.onerror = e => showMessage('🚫 Speech error: ' + e.error);
+      synth.speak(utter);
+      showMessage('🎙️ Speaking...');
     }
 
     function stopSpeaking() {
       if (synth.speaking) {
         synth.cancel();
-        showMessage('Speech stopped.');
+        showMessage('🛑 Stopped.');
       } else {
-        showMessage('Nothing is speaking.');
+        showMessage('ℹ️ Nothing is speaking.');
       }
     }
 
-    async function generateText() {
+    function generateText() {
       const prompt = textInput.value.trim();
-      if (!prompt) {
-        showMessage('Enter prompt to generate text.');
-        return;
-      }
-
+      if (!prompt) return showMessage('💬 Enter something to generate from!');
       generateButton.disabled = true;
       speakButton.disabled = true;
       stopButton.disabled = true;
       loadingSpinner.style.visibility = 'visible';
-      showMessage('Generating...');
+      showMessage('🔄 Generating...');
 
-      // For now, just simulate generation (you can replace with API call later)
       setTimeout(() => {
-        const generated = prompt + ' (This is a dummy generated response.)';
-        textInput.value = generated;
+        const output = prompt + ' (FunkPhonic says this was generated)';
+        textInput.value = output;
         speakText();
         generateButton.disabled = false;
         speakButton.disabled = false;
         stopButton.disabled = false;
         loadingSpinner.style.visibility = 'hidden';
-        showMessage('Generated text ready!');
+        showMessage('✨ Generated and speaking!');
       }, 2000);
     }
 
@@ -202,8 +191,10 @@
     stopButton.addEventListener('click', stopSpeaking);
     generateButton.addEventListener('click', generateText);
 
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = populateVoiceList;
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = populateVoiceList;
+    } else {
+      setTimeout(populateVoiceList, 500);
     }
 
     window.onload = populateVoiceList;
