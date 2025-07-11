@@ -81,6 +81,12 @@
       font-weight: 600;
       display: none;
     }
+    .download-link {
+      text-align: center;
+      color: #24b3a8;
+      font-weight: bold;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -104,6 +110,9 @@
     </div>
 
     <div id="message-box"></div>
+    <div id="download-section" class="download-link">
+      <a id="download-link" href="#" download="funkphonic-audio.wav">⬇️ Download Audio</a>
+    </div>
   </div>
 
   <script>
@@ -114,6 +123,9 @@
     const generateButton = document.getElementById('generate-button');
     const loadingSpinner = document.getElementById('loading-spinner');
     const messageBox = document.getElementById('message-box');
+    const downloadLink = document.getElementById('download-link');
+    const downloadSection = document.getElementById('download-section');
+
     const synth = window.speechSynthesis;
     let voices = [];
 
@@ -126,10 +138,7 @@
     }
 
     function populateVoiceList() {
-      voices = synth.getVoices().filter(v =>
-        v.name && v.lang && (v.default || v.localService || v.name.includes("Google"))
-      );
-
+      voices = synth.getVoices().filter(v => v.name && v.lang);
       voiceSelect.innerHTML = '';
       voices.forEach(voice => {
         const option = document.createElement('option');
@@ -137,10 +146,8 @@
         option.value = voice.name;
         voiceSelect.appendChild(option);
       });
-
       const preferred = voices.find(v => v.name.includes('Google') || v.lang.startsWith('en'));
       if (preferred) voiceSelect.value = preferred.name;
-
       showMessage(`🎧 Loaded ${voices.length} voices`);
     }
 
@@ -155,6 +162,7 @@
       utter.onerror = e => showMessage('🚫 Speech error: ' + e.error);
       synth.speak(utter);
       showMessage('🎙️ Speaking...');
+      downloadSection.style.display = 'none';
     }
 
     function stopSpeaking() {
