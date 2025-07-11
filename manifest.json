@@ -1,10 +1,13 @@
 {
   "name": "FunkPhonic",
   "short_name": "FunkPhonic",
+  "description": "FunkPhonic is a stylish voice synthesis web app with bold Funkulture flair. Speak, generate, and vibe with custom audio.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#151515",
-  "theme_color": "#7a1Fa2",
+  "theme_color": "#7a1fa2",
+  "orientation": "portrait",
+  "scope": "./",
   "icons": [
     {
       "src": "icons/icon-192.png",
