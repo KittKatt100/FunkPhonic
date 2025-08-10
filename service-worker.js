@@ -1,42 +1,59 @@
-const CACHE_NAME = 'funkphonic-cache-v1';
-const urlsToCache = [
+/* FunkPhonic Service Worker - v1 */
+const CACHE_NAME = 'funkphonic-v1';
+const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
-  './service-worker.js',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  // Tailwind from CDN is networked; page still works without it.
 ];
 
-// Install event: cache all necessary files
-self.addEventListener('install', event => {
+// Install: pre-cache app shell
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
+  self.skipWaiting();
 });
 
-// Activate event: clean up old caches
-self.addEventListener('activate', event => {
+// Activate: clean old caches, take control
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)))
+    )
+  );
+  self.clients.claim();
+});
+
+// Fetch: HTML = network-first; everything else = cache-first
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const isHTML = req.headers.get('accept')?.includes('text/html');
+
+  if (isHTML) {
+    // Network-first for HTML (so updates show up quickly)
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+          return res;
         })
-      );
-    })
-  );
-});
-
-// Fetch event: serve cached content when offline
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
-  );
+        .catch(() => caches.match(req).then((res) => res || caches.match('./index.html')))
+    );
+  } else {
+    // Cache-first for assets (fast & offline)
+    event.respondWith(
+      caches.match(req).then((cached) => cached || fetch(req).then((res) => {
+        // Optionally cache new GET responses
+        if (req.method === 'GET' && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        }
+        return res;
+      }))
+    );
+  }
 });
