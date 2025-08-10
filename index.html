@@ -4,85 +4,62 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FunkPhonic</title>
+
+  <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#7A1FA2" />
+
   <style>
-    /* (same CSS as before for branding) */
-    :root {
+    :root{
       --bg:#151515; --fg:#ffffff;
       --purple:#7A1FA2; --orange:#FF7227;
       --heli:#DF5086; --teal:#24B3A8;
     }
-    body {
+    body{
       background:var(--bg); color:var(--fg);
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       min-height:100vh; margin:0; display:flex; align-items:center; justify-content:center; padding:24px;
     }
-    .card {
-      width:100%; max-width:720px; background:#1a1a1a; border:1px solid var(--teal);
+    .card{
+      width:100%; max-width:760px; background:#1a1a1a; border:1px solid var(--teal);
       border-radius:20px; box-shadow:0 0 24px rgba(122,31,162,.35);
       padding:28px; display:flex; flex-direction:column; gap:18px;
     }
-    textarea {
+    textarea{
       background:#242424; color:#fff; border:2px solid var(--purple); border-radius:12px;
       padding:14px; min-height:140px; resize:vertical; outline:none;
     }
-    select, button {
+    select, button{
       background:var(--purple); color:#fff; border:none; border-radius:12px; padding:12px 16px;
     }
-    button {
-      font-weight:700; box-shadow:0 0 10px rgba(122,31,162,.4);
-      transition:.2s transform,.2s background;
-    }
-    button:hover { transform:translateY(-2px); }
-    .btn-orange { background:var(--orange); }
-    .btn-orange:hover { background:#e25f17; }
-    .btn-purple { background:var(--purple); }
-    .btn-purple:hover { background:#6b1593; }
-    .btn-teal { background:var(--teal); }
-    .btn-teal:hover { background:#1ea197; }
-    .chip {
-      background:#242424; border:1px solid #333; border-radius:999px;
-      padding:6px 10px; font-size:12px; color:#aaa;
-    }
-    .spinner {
-      border:4px solid rgba(255,255,255,.25); border-left-color:var(--teal);
-      width:22px;height:22px;border-radius:50%;
-      animation:spin 1s linear infinite; display:inline-block;
-      vertical-align:middle; margin-left:8px; visibility:hidden;
-    }
+    button{ font-weight:700; box-shadow:0 0 10px rgba(122,31,162,.4); transition:.2s transform,.2s background; }
+    button:hover{ transform:translateY(-2px); }
+    .btn-orange{ background:var(--orange); } .btn-orange:hover{ background:#e25f17; }
+    .btn-purple{ background:var(--purple); } .btn-purple:hover{ background:#6b1593; }
+    .btn-teal{ background:var(--teal); } .btn-teal:hover{ background:#1ea197; }
+    .chip{ background:#242424; border:1px solid #333; border-radius:999px; padding:6px 10px; font-size:12px; color:#aaa; }
+    .spinner{ border:4px solid rgba(255,255,255,.25); border-left-color:var(--teal); width:22px;height:22px;border-radius:50%; animation:spin 1s linear infinite; display:inline-block; vertical-align:middle; margin-left:8px; visibility:hidden; }
     @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
-    .msg {
-      display:none; padding:12px 14px; border-radius:12px; text-align:center;
-      font-weight:600;
-    }
-    .msg.info{ background:#17324d; color:#cfe9ff; }
-    .msg.error{ background:#4d1717; color:#ffd0d0; }
-    .msg.success{ background:#0f3a33; color:#bff1ea; }
-    .link-ghost {
-      color:var(--teal); text-decoration:none; font-weight:700;
-      display:none; text-align:center;
-    }
-    .row {
-      display:flex; flex-wrap:wrap; gap:12px; align-items:center;
-    }
-    .row > * { flex:1 1 auto; }
-    .row .tight { flex:0 0 auto; }
+    .msg{ display:none; padding:12px 14px; border-radius:12px; text-align:center; font-weight:600; }
+    .msg.info{ background:#17324d; color:#cfe9ff; } .msg.error{ background:#4d1717; color:#ffd0d0; } .msg.success{ background:#0f3a33; color:#bff1ea; }
+    .link-ghost{ color:var(--teal); text-decoration:none; font-weight:700; display:none; text-align:center; }
+    .row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; } .row > *{ flex:1 1 auto; } .row .tight{ flex:0 0 auto; }
+    pre#errorDetail { white-space:pre-wrap; background:#2a2a2a; color:#ffe; padding:10px; border-radius:10px; display:none; font-size:12px; }
   </style>
 </head>
 <body>
   <main class="card">
     <header class="text-center">
       <h1 class="text-4xl font-extrabold text-[#DF5086]">FunkPhonic</h1>
-      <p class="mt-1 text-sm text-gray-300">
-        Type a script → choose engine → talk it out → <span class="text-[#24B3A8]">download MP3 (ElevenLabs)</span>
-      </p>
+      <p class="mt-1 text-sm text-gray-300">Type a script → choose engine → make it talk → <span class="text-[#24B3A8]">download MP3 (with ElevenLabs)</span></p>
     </header>
 
     <section>
-      <label class="block mb-2 text-sm text-gray-300">Describe the script</label>
-      <textarea id="text-input" placeholder="e.g., Write a 15-second hype ad for FunkPhonic..."></textarea>
+      <label class="block mb-2 text-sm text-gray-300">Describe the script you want</label>
+      <textarea id="text-input" placeholder="e.g., Write a 20-second hype ad for Funkulture’s Heliconia candles with a confident, playful tone."></textarea>
     </section>
 
     <section class="row">
@@ -111,14 +88,20 @@
     </section>
 
     <div id="msg" class="msg info"></div>
+    <pre id="errorDetail"></pre>
 
     <div class="row">
-      <div class="chip">Tip: “Generate Script” writes the script. “Speak It” uses device voices. “Generate Voice” uses ElevenLabs + download.</div>
+      <div class="chip">Tip: “Generate Script” writes the copy (demo). “Speak It” = device voice. “Generate Voice” = ElevenLabs + download.</div>
     </div>
   </main>
 
   <script>
-    // Elements setup
+    // ---------- CONFIG ----------
+    // If you deploy the Cloudflare Worker below, set PROXY_URL to it (e.g., 'https://your-worker.yourname.workers.dev/tts')
+    // Then you NEVER put your API key in the browser.
+    const PROXY_URL = ''; // <- set to your Worker /tts endpoint when ready. Leave '' for direct mode.
+
+    // ---------- Elements ----------
     const textInput = document.getElementById('text-input');
     const engineSelect = document.getElementById('engine-select');
     const voiceSelect = document.getElementById('voice-select');
@@ -132,159 +115,209 @@
     const downloadLink = document.getElementById('download-link');
     const settingsBtn = document.getElementById('settings-btn');
     const msg = document.getElementById('msg');
+    const errorDetail = document.getElementById('errorDetail');
 
-    // TTS & audio
+    // ---------- Audio & voices ----------
     const synth = window.speechSynthesis;
     const audioPlayer = new Audio();
     let voices = [], audioBlob = null;
 
-    // Utility messaging
     function showMsg(text, type='info', timeout=4500){
       msg.className = 'msg ' + type;
       msg.textContent = text;
       msg.style.display = 'block';
-      if (timeout) setTimeout(() => msg.style.display = 'none', timeout);
+      if (timeout) setTimeout(()=> msg.style.display='none', timeout);
     }
+    function showErrorDetail(obj){
+      errorDetail.style.display = 'block';
+      try { errorDetail.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2); }
+      catch { errorDetail.textContent = String(obj); }
+    }
+    function clearErrorDetail(){ errorDetail.style.display='none'; errorDetail.textContent=''; }
     function setBusy(el, spinning=true){
       if (el === generateBtn) genSpinner.style.visibility = spinning ? 'visible' : 'hidden';
       if (el === voiceGenBtn) ttsSpinner.style.visibility = spinning ? 'visible' : 'hidden';
       if (el) el.disabled = spinning;
       speakBtn.disabled = spinning && el === voiceGenBtn;
-      stopBtn.disabled = spinning && el === voiceGenBtn;
+      stopBtn.disabled  = spinning && el === voiceGenBtn;
     }
 
-    // Populate browser voices
+    // ---------- Browser voices ----------
     function populateVoices(){
       voices = synth.getVoices().filter(v => v && v.name && v.lang);
       voiceSelect.innerHTML = '';
-      if (!voices.length) {
+      if (!voices.length){
         const opt = document.createElement('option');
-        opt.textContent = 'No voices found. Refresh browser.';
+        opt.textContent = 'No voices available (refresh browser)';
         voiceSelect.appendChild(opt);
         return;
       }
-      voices.forEach(v => {
+      voices.forEach(v=>{
         const opt = document.createElement('option');
         opt.value = v.name;
         opt.textContent = `${v.name} (${v.lang})${v.default ? ' • default' : ''}`;
         voiceSelect.appendChild(opt);
       });
-      const pref = voices.find(v => v.name.includes('Google')) || voices[0];
-      if (pref) voiceSelect.value = pref.name;
-      showMsg(`🎧 Loaded ${voices.length} device voices`, 'info', 2500);
+      const preferred = voices.find(v => v.name.includes('Google')) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+      if (preferred) voiceSelect.value = preferred.name;
+      showMsg(`🎧 Loaded ${voices.length} device voices`, 'info', 2200);
     }
     if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
     window.addEventListener('load', populateVoices);
 
-    // Demo script generation
-    generateBtn.addEventListener('click', () => {
+    // ---------- Demo Script Gen ----------
+    generateBtn.addEventListener('click', ()=>{
       const prompt = textInput.value.trim();
-      if (!prompt) return showMsg('Type a prompt first.', 'error');
+      if (!prompt){ showMsg('Type what kind of script you want first.', 'error'); return; }
       setBusy(generateBtn, true);
-      setTimeout(() => {
-        textInput.value = `${prompt}\n\n[FunkPhonic draft]\nFast intro. One benefit per line. Bold CTA.`;
+      clearErrorDetail();
+      setTimeout(()=>{
+        textInput.value = `${prompt}\n\n[FunkPhonic draft]\n• Open strong\n• One benefit per line\n• Punchy CTA at the end.`;
         setBusy(generateBtn, false);
-        showMsg('✨ Script ready.', 'success');
-      }, 1000);
+        showMsg('✨ Script generated (demo).', 'success');
+      }, 900);
     });
 
-    // Browser TTS
+    // ---------- Browser TTS ----------
     function speakBrowser(text){
-      if (!text) return showMsg('Nothing to speak.', 'error');
+      if (!text){ showMsg('Nothing to speak. Type or generate a script.', 'error'); return; }
       if (synth.speaking) synth.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      const sel = voices.find(v => v.name === voiceSelect.value);
-      if (sel) utter.voice = sel;
-      utter.onend = () => showMsg('✅ Done speaking.', 'success');
-      utter.onerror = e => showMsg('Speech error: ' + (e.error||''), 'error');
-      synth.speak(utter);
+      const u = new SpeechSynthesisUtterance(text);
+      const selected = voices.find(v => v.name === voiceSelect.value);
+      if (selected) u.voice = selected;
+      u.onend = ()=> showMsg('✅ Done speaking.', 'success');
+      u.onerror = e => showMsg('Speech error: ' + (e.error||'unknown'), 'error');
+      synth.speak(u);
       downloadLink.style.display = 'none';
     }
-
-    speakBtn.addEventListener('click', () => {
-      if (engineSelect.value === 'elevenlabs') {
-        showMsg('Use “Generate Voice” for downloadable audio.', 'info');
+    speakBtn.addEventListener('click', ()=>{
+      if (engineSelect.value === 'elevenlabs'){
+        showMsg('Use “🎧 Generate Voice” for downloadable audio via ElevenLabs.', 'info');
         return;
       }
       speakBrowser(textInput.value.trim());
     });
-
-    stopBtn.addEventListener('click', () => {
+    stopBtn.addEventListener('click', ()=>{
       if (synth.speaking) synth.cancel();
-      audioPlayer.pause();
-      audioPlayer.currentTime = 0;
-      showMsg('⛔ Stopped', 'info');
+      audioPlayer.pause(); audioPlayer.currentTime = 0;
+      showMsg('⛔ Stopped.', 'info', 1800);
     });
 
-    // ElevenLabs settings
-    function getEleven(){
+    // ---------- Settings (localStorage) ----------
+    function getCfg(){
       return {
-        key: localStorage.getItem('eleven_api_key') || '',
-        voice: localStorage.getItem('eleven_voice_id') || ''
+        apiKey: localStorage.getItem('eleven_api_key') || '',
+        voiceId: localStorage.getItem('eleven_voice_id') || '',
       };
     }
-    function setEleven(key, voice){
-      localStorage.setItem('eleven_api_key', key || '');
-      localStorage.setItem('eleven_voice_id', voice || '');
-    }
-    settingsBtn.addEventListener('click', () => {
-      const cur = getEleven();
-      const apiKey = prompt('ElevenLabs API Key (saved locally):', cur.key || '');
-      if (apiKey === null) return;
-      const voiceId = prompt('ElevenLabs Voice ID:', cur.voice || '');
+    function setCfg(k, v){ localStorage.setItem(k, v || ''); }
+    settingsBtn.addEventListener('click', ()=>{
+      const cur = getCfg();
+      if (!PROXY_URL){
+        const apiKey = prompt('ElevenLabs API Key (stored only in this browser):', cur.apiKey || '');
+        if (apiKey === null) return;
+        setCfg('eleven_api_key', apiKey.trim());
+      } else {
+        alert('Using proxy mode. No API key needed in the browser.');
+      }
+      const voiceId = prompt('ElevenLabs Voice ID (from Voices → More actions → Copy voice ID):', cur.voiceId || '');
       if (voiceId === null) return;
-      setEleven(apiKey.trim(), voiceId.trim());
-      showMsg('Saved ElevenLabs settings locally.', 'success');
+      setCfg('eleven_voice_id', voiceId.trim());
+      showMsg('Saved settings locally.', 'success');
     });
 
-    // ElevenLabs TTS (download)
-    async function ttsElevenLabs(text){
-      const { key, voice } = getEleven();
-      if (!key || !voice) return showMsg('Set ElevenLabs API + Voice ID.', 'error');
+    // ---------- ElevenLabs TTS ----------
+    async function ttsViaProxy(text, voiceId){
+      // POST to your Worker
+      const res = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text, voice_id: voiceId,
+          model_id: 'eleven_multilingual_v2',
+          output_format: 'mp3_44100_128'
+        })
+      });
+      if (!res.ok){
+        const errTxt = await res.text().catch(()=> '');
+        throw new Error(`Proxy ${res.status}: ${errTxt}`);
+      }
+      return await res.arrayBuffer();
+    }
+
+    async function ttsDirect(text, voiceId, apiKey){
+      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Accept':'audio/mpeg',
+          'xi-api-key': apiKey
+        },
+        body: JSON.stringify({
+          text,
+          model_id: 'eleven_multilingual_v2',
+          output_format: 'mp3_44100_128'
+        })
+      });
+      if (!res.ok){
+        // Try to surface JSON error body if present
+        let detail = '';
+        try { detail = await res.text(); } catch {}
+        throw new Error(`ElevenLabs ${res.status}: ${detail}`);
+      }
+      return await res.arrayBuffer();
+    }
+
+    async function generateElevenLabs(){
+      const text = textInput.value.trim();
+      if (!text){ showMsg('Type or generate a script first.', 'error'); return; }
+      const { apiKey, voiceId } = getCfg();
+      if (!voiceId){ showMsg('Set Voice ID in Settings.', 'error'); return; }
+
       setBusy(voiceGenBtn, true);
+      clearErrorDetail();
       downloadLink.style.display = 'none';
-      try {
-        const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
-          body: JSON.stringify({ text, model_id:'eleven_monolingual_v1', voice_settings:{ stability:0.5, similarity_boost:0.75 } })
-        });
-        if (!res.ok) throw new Error('TTS failed: ' + res.status);
-        const buf = await res.arrayBuffer();
+
+      try{
+        const buf = PROXY_URL
+          ? await ttsViaProxy(text, voiceId)
+          : await ttsDirect(text, voiceId, apiKey || '');
+
         audioBlob = new Blob([buf], { type:'audio/mpeg' });
         const url = URL.createObjectURL(audioBlob);
         audioPlayer.src = url;
-        audioPlayer.play();
+        await audioPlayer.play();
         downloadLink.href = url;
         downloadLink.style.display = 'block';
-        showMsg('🎧 Voice ready—download below.', 'success');
-      } catch(e){
+        showMsg('🎧 Voice ready — download below.', 'success');
+      }catch(e){
         console.error(e);
-        showMsg('ElevenLabs error—check settings/credits.', 'error');
-      } finally {
+        showMsg('TTS error. See details below.', 'error', 7000);
+        showErrorDetail(e.message || e);
+      }finally{
         setBusy(voiceGenBtn, false);
       }
     }
-    voiceGenBtn.addEventListener('click', () => {
-      const text = textInput.value.trim();
-      if (!text) return showMsg('Type or generate your script first.', 'error');
-      if (engineSelect.value === 'browser') {
-        showMsg('Switch to ElevenLabs for downloads.', 'info');
-        speakBrowser(text);
+
+    voiceGenBtn.addEventListener('click', ()=>{
+      if (engineSelect.value === 'browser'){
+        showMsg('Switch engine to “ElevenLabs” for downloadable audio.', 'info');
+        speakBrowser(textInput.value.trim());
         return;
       }
-      ttsElevenLabs(text);
+      generateElevenLabs();
     });
 
-    engineSelect.addEventListener('change', () => {
+    engineSelect.addEventListener('change', ()=>{
       browserVoiceWrap.style.display = engineSelect.value === 'browser' ? 'block' : 'none';
       if (engineSelect.value !== 'browser') downloadLink.style.display = 'none';
     });
     browserVoiceWrap.style.display = 'block';
   </script>
 
+  <!-- Register service worker -->
   <script>
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator){
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW reg failed:', err));
       });
