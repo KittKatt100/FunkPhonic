@@ -97,9 +97,8 @@
 
   <script>
     // ---------- CONFIG ----------
-    // If you deploy the Cloudflare Worker below, set PROXY_URL to it (e.g., 'https://your-worker.yourname.workers.dev/tts')
-    // Then you NEVER put your API key in the browser.
-    const PROXY_URL = ''; // <- set to your Worker /tts endpoint when ready. Leave '' for direct mode.
+    // IMPORTANT: set this to your Cloudflare Worker URL
+    const PROXY_URL = 'https://YOUR-WORKER-NAME.YOURNAME.workers.dev'; // <-- replace
 
     // ---------- Elements ----------
     const textInput = document.getElementById('text-input');
@@ -206,29 +205,20 @@
     // ---------- Settings (localStorage) ----------
     function getCfg(){
       return {
-        apiKey: localStorage.getItem('eleven_api_key') || '',
         voiceId: localStorage.getItem('eleven_voice_id') || '',
       };
     }
     function setCfg(k, v){ localStorage.setItem(k, v || ''); }
     settingsBtn.addEventListener('click', ()=>{
       const cur = getCfg();
-      if (!PROXY_URL){
-        const apiKey = prompt('ElevenLabs API Key (stored only in this browser):', cur.apiKey || '');
-        if (apiKey === null) return;
-        setCfg('eleven_api_key', apiKey.trim());
-      } else {
-        alert('Using proxy mode. No API key needed in the browser.');
-      }
       const voiceId = prompt('ElevenLabs Voice ID (from Voices → More actions → Copy voice ID):', cur.voiceId || '');
       if (voiceId === null) return;
       setCfg('eleven_voice_id', voiceId.trim());
       showMsg('Saved settings locally.', 'success');
     });
 
-    // ---------- ElevenLabs TTS ----------
+    // ---------- ElevenLabs via Proxy ----------
     async function ttsViaProxy(text, voiceId){
-      // POST to your Worker
       const res = await fetch(PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -245,33 +235,10 @@
       return await res.arrayBuffer();
     }
 
-    async function ttsDirect(text, voiceId, apiKey){
-      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Accept':'audio/mpeg',
-          'xi-api-key': apiKey
-        },
-        body: JSON.stringify({
-          text,
-          model_id: 'eleven_multilingual_v2',
-          output_format: 'mp3_44100_128'
-        })
-      });
-      if (!res.ok){
-        // Try to surface JSON error body if present
-        let detail = '';
-        try { detail = await res.text(); } catch {}
-        throw new Error(`ElevenLabs ${res.status}: ${detail}`);
-      }
-      return await res.arrayBuffer();
-    }
-
     async function generateElevenLabs(){
       const text = textInput.value.trim();
       if (!text){ showMsg('Type or generate a script first.', 'error'); return; }
-      const { apiKey, voiceId } = getCfg();
+      const { voiceId } = getCfg();
       if (!voiceId){ showMsg('Set Voice ID in Settings.', 'error'); return; }
 
       setBusy(voiceGenBtn, true);
@@ -279,10 +246,7 @@
       downloadLink.style.display = 'none';
 
       try{
-        const buf = PROXY_URL
-          ? await ttsViaProxy(text, voiceId)
-          : await ttsDirect(text, voiceId, apiKey || '');
-
+        const buf = await ttsViaProxy(text, voiceId);
         audioBlob = new Blob([buf], { type:'audio/mpeg' });
         const url = URL.createObjectURL(audioBlob);
         audioPlayer.src = url;
@@ -315,11 +279,12 @@
     browserVoiceWrap.style.display = 'block';
   </script>
 
-  <!-- Register service worker -->
+  <!-- Register your FRONTEND service worker (you created worker.js) -->
   <script>
     if ('serviceWorker' in navigator){
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW reg failed:', err));
+        // On GitHub Pages under /FunkPhonic/, this resolves to /FunkPhonic/worker.js
+        navigator.serviceWorker.register('./worker.js').catch(err => console.log('SW reg failed:', err));
       });
     }
   </script>
