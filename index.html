@@ -4,75 +4,87 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FunkPhonic</title>
-
-  <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#7A1FA2" />
-
   <style>
-    :root{
+    /* (same CSS as before for branding) */
+    :root {
       --bg:#151515; --fg:#ffffff;
       --purple:#7A1FA2; --orange:#FF7227;
       --heli:#DF5086; --teal:#24B3A8;
     }
-    body{
+    body {
       background:var(--bg); color:var(--fg);
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       min-height:100vh; margin:0; display:flex; align-items:center; justify-content:center; padding:24px;
     }
-    .card{
+    .card {
       width:100%; max-width:720px; background:#1a1a1a; border:1px solid var(--teal);
       border-radius:20px; box-shadow:0 0 24px rgba(122,31,162,.35);
       padding:28px; display:flex; flex-direction:column; gap:18px;
     }
-    textarea{
+    textarea {
       background:#242424; color:#fff; border:2px solid var(--purple); border-radius:12px;
       padding:14px; min-height:140px; resize:vertical; outline:none;
     }
-    select, button{
+    select, button {
       background:var(--purple); color:#fff; border:none; border-radius:12px; padding:12px 16px;
     }
-    button{ font-weight:700; box-shadow:0 0 10px rgba(122,31,162,.4); transition:.2s transform,.2s background; }
-    button:hover{ transform:translateY(-2px); }
-    .btn-orange{ background:var(--orange); }
-    .btn-orange:hover{ background:#e25f17; }
-    .btn-purple{ background:var(--purple); }
-    .btn-purple:hover{ background:#6b1593; }
-    .btn-teal{ background:var(--teal); }
-    .btn-teal:hover{ background:#1ea197; }
-    .chip{ background:#242424; border:1px solid #333; border-radius:999px; padding:6px 10px; font-size:12px; color:#aaa; }
-    .spinner{
-      border:4px solid rgba(255,255,255,.25); border-left-color:var(--teal); width:22px;height:22px;border-radius:50%;
-      animation:spin 1s linear infinite; display:inline-block; vertical-align:middle; margin-left:8px; visibility:hidden;
+    button {
+      font-weight:700; box-shadow:0 0 10px rgba(122,31,162,.4);
+      transition:.2s transform,.2s background;
+    }
+    button:hover { transform:translateY(-2px); }
+    .btn-orange { background:var(--orange); }
+    .btn-orange:hover { background:#e25f17; }
+    .btn-purple { background:var(--purple); }
+    .btn-purple:hover { background:#6b1593; }
+    .btn-teal { background:var(--teal); }
+    .btn-teal:hover { background:#1ea197; }
+    .chip {
+      background:#242424; border:1px solid #333; border-radius:999px;
+      padding:6px 10px; font-size:12px; color:#aaa;
+    }
+    .spinner {
+      border:4px solid rgba(255,255,255,.25); border-left-color:var(--teal);
+      width:22px;height:22px;border-radius:50%;
+      animation:spin 1s linear infinite; display:inline-block;
+      vertical-align:middle; margin-left:8px; visibility:hidden;
     }
     @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
-    .msg{ display:none; padding:12px 14px; border-radius:12px; text-align:center; font-weight:600; }
+    .msg {
+      display:none; padding:12px 14px; border-radius:12px; text-align:center;
+      font-weight:600;
+    }
     .msg.info{ background:#17324d; color:#cfe9ff; }
     .msg.error{ background:#4d1717; color:#ffd0d0; }
     .msg.success{ background:#0f3a33; color:#bff1ea; }
-    .link-ghost{ color:var(--teal); text-decoration:none; font-weight:700; display:none; text-align:center; }
-    .row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
-    .row > *{ flex:1 1 auto; }
-    .row .tight{ flex:0 0 auto; }
+    .link-ghost {
+      color:var(--teal); text-decoration:none; font-weight:700;
+      display:none; text-align:center;
+    }
+    .row {
+      display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+    }
+    .row > * { flex:1 1 auto; }
+    .row .tight { flex:0 0 auto; }
   </style>
 </head>
 <body>
   <main class="card">
     <header class="text-center">
       <h1 class="text-4xl font-extrabold text-[#DF5086]">FunkPhonic</h1>
-      <p class="mt-1 text-sm text-gray-300">Type a script → choose engine → make it talk → <span class="text-[#24B3A8]">download MP3 (with ElevenLabs)</span></p>
+      <p class="mt-1 text-sm text-gray-300">
+        Type a script → choose engine → talk it out → <span class="text-[#24B3A8]">download MP3 (ElevenLabs)</span>
+      </p>
     </header>
 
-    <!-- Script input -->
     <section>
-      <label class="block mb-2 text-sm text-gray-300">Describe the script you want</label>
-      <textarea id="text-input" placeholder="e.g., Write a 20-second hype ad for Funkulture’s Heliconia candles with a confident, playful tone."></textarea>
+      <label class="block mb-2 text-sm text-gray-300">Describe the script</label>
+      <textarea id="text-input" placeholder="e.g., Write a 15-second hype ad for FunkPhonic..."></textarea>
     </section>
 
-    <!-- Controls row: engine + voice + settings -->
     <section class="row">
       <div>
         <label class="block mb-2 text-sm text-gray-300">Voice Engine</label>
@@ -90,7 +102,6 @@
       </div>
     </section>
 
-    <!-- Action buttons -->
     <section class="row">
       <button id="generate-btn" class="btn-orange">✨ Generate Script <span id="gen-spinner" class="spinner"></span></button>
       <button id="speak-btn" class="btn-purple">🗣️ Speak It</button>
@@ -99,116 +110,113 @@
       <a id="download-link" class="link-ghost" href="#" download="funkphonic-voice.mp3">⬇️ Download Audio</a>
     </section>
 
-    <!-- Messages -->
     <div id="msg" class="msg info"></div>
 
-    <!-- Tiny help -->
     <div class="row">
-      <div class="chip">Tip: “Generate Script” writes copy (demo). “Speak It” = device voice. “Generate Voice” = ElevenLabs + download.</div>
+      <div class="chip">Tip: “Generate Script” writes the script. “Speak It” uses device voices. “Generate Voice” uses ElevenLabs + download.</div>
     </div>
   </main>
 
   <script>
-    // Elements
+    // Elements setup
     const textInput = document.getElementById('text-input');
     const engineSelect = document.getElementById('engine-select');
     const voiceSelect = document.getElementById('voice-select');
     const browserVoiceWrap = document.getElementById('browser-voice-wrap');
-
     const generateBtn = document.getElementById('generate-btn');
     const speakBtn = document.getElementById('speak-btn');
     const stopBtn = document.getElementById('stop-btn');
     const voiceGenBtn = document.getElementById('voicegen-btn');
-
     const genSpinner = document.getElementById('gen-spinner');
     const ttsSpinner = document.getElementById('tts-spinner');
     const downloadLink = document.getElementById('download-link');
     const settingsBtn = document.getElementById('settings-btn');
     const msg = document.getElementById('msg');
 
-    // Audio + voices
+    // TTS & audio
     const synth = window.speechSynthesis;
     const audioPlayer = new Audio();
-    let voices = [];
-    let audioBlob = null;
+    let voices = [], audioBlob = null;
 
-    // Messages
+    // Utility messaging
     function showMsg(text, type='info', timeout=4500){
       msg.className = 'msg ' + type;
       msg.textContent = text;
       msg.style.display = 'block';
-      if (timeout){ setTimeout(()=> msg.style.display='none', timeout); }
+      if (timeout) setTimeout(() => msg.style.display = 'none', timeout);
     }
     function setBusy(el, spinning=true){
       if (el === generateBtn) genSpinner.style.visibility = spinning ? 'visible' : 'hidden';
       if (el === voiceGenBtn) ttsSpinner.style.visibility = spinning ? 'visible' : 'hidden';
       if (el) el.disabled = spinning;
-      // keep UI sane during API work
-      speakBtn.disabled = spinning && el===voiceGenBtn;
-      stopBtn.disabled  = spinning && el===voiceGenBtn;
+      speakBtn.disabled = spinning && el === voiceGenBtn;
+      stopBtn.disabled = spinning && el === voiceGenBtn;
     }
 
     // Populate browser voices
     function populateVoices(){
       voices = synth.getVoices().filter(v => v && v.name && v.lang);
       voiceSelect.innerHTML = '';
-      if (!voices.length){
+      if (!voices.length) {
         const opt = document.createElement('option');
-        opt.textContent = 'No voices available (refresh browser)';
+        opt.textContent = 'No voices found. Refresh browser.';
         voiceSelect.appendChild(opt);
         return;
       }
-      voices.forEach(v=>{
+      voices.forEach(v => {
         const opt = document.createElement('option');
         opt.value = v.name;
         opt.textContent = `${v.name} (${v.lang})${v.default ? ' • default' : ''}`;
         voiceSelect.appendChild(opt);
       });
-      const preferred = voices.find(v => v.name.includes('Google')) || voices.find(v => v.lang.startsWith('en')) || voices[0];
-      if (preferred) voiceSelect.value = preferred.name;
+      const pref = voices.find(v => v.name.includes('Google')) || voices[0];
+      if (pref) voiceSelect.value = pref.name;
       showMsg(`🎧 Loaded ${voices.length} device voices`, 'info', 2500);
     }
     if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
     window.addEventListener('load', populateVoices);
 
-    // Demo "Generate Script" (stub)
-    generateBtn.addEventListener('click', ()=>{
+    // Demo script generation
+    generateBtn.addEventListener('click', () => {
       const prompt = textInput.value.trim();
-      if (!prompt){ showMsg('Type what kind of script you want first.', 'error'); return; }
+      if (!prompt) return showMsg('Type a prompt first.', 'error');
       setBusy(generateBtn, true);
-      setTimeout(()=>{
-        textInput.value = `${prompt}\n\n[FunkPhonic draft]\nIntro fast • One benefit per line • Punchy CTA at the end.`;
+      setTimeout(() => {
+        textInput.value = `${prompt}\n\n[FunkPhonic draft]\nFast intro. One benefit per line. Bold CTA.`;
         setBusy(generateBtn, false);
-        showMsg('✨ Script generated (demo).', 'success');
-      }, 1100);
+        showMsg('✨ Script ready.', 'success');
+      }, 1000);
     });
 
-    // Speak via browser voices (no download)
+    // Browser TTS
     function speakBrowser(text){
-      if (!text){ showMsg('Nothing to speak. Type or generate a script.', 'error'); return; }
+      if (!text) return showMsg('Nothing to speak.', 'error');
       if (synth.speaking) synth.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      const selected = voices.find(v => v.name === voiceSelect.value);
-      if (selected) u.voice = selected;
-      u.onend = ()=> showMsg('✅ Done speaking.', 'success');
-      u.onerror = e => showMsg('Speech error: ' + (e.error||'unknown'), 'error');
-      synth.speak(u);
+      const utter = new SpeechSynthesisUtterance(text);
+      const sel = voices.find(v => v.name === voiceSelect.value);
+      if (sel) utter.voice = sel;
+      utter.onend = () => showMsg('✅ Done speaking.', 'success');
+      utter.onerror = e => showMsg('Speech error: ' + (e.error||''), 'error');
+      synth.speak(utter);
       downloadLink.style.display = 'none';
     }
-    speakBtn.addEventListener('click', ()=>{
-      if (engineSelect.value === 'elevenlabs'){
-        showMsg('Use “🎧 Generate Voice” for downloadable audio via ElevenLabs.', 'info');
+
+    speakBtn.addEventListener('click', () => {
+      if (engineSelect.value === 'elevenlabs') {
+        showMsg('Use “Generate Voice” for downloadable audio.', 'info');
         return;
       }
       speakBrowser(textInput.value.trim());
     });
-    stopBtn.addEventListener('click', ()=>{
+
+    stopBtn.addEventListener('click', () => {
       if (synth.speaking) synth.cancel();
-      audioPlayer.pause(); audioPlayer.currentTime = 0;
-      showMsg('⛔ Stopped.', 'info', 2000);
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+      showMsg('⛔ Stopped', 'info');
     });
 
-    // ElevenLabs settings in localStorage
+    // ElevenLabs settings
     function getEleven(){
       return {
         key: localStorage.getItem('eleven_api_key') || '',
@@ -219,82 +227,66 @@
       localStorage.setItem('eleven_api_key', key || '');
       localStorage.setItem('eleven_voice_id', voice || '');
     }
-    settingsBtn.addEventListener('click', ()=>{
+    settingsBtn.addEventListener('click', () => {
       const cur = getEleven();
-      const apiKey = prompt('Enter ElevenLabs API Key (stored only in this browser):', cur.key || '');
+      const apiKey = prompt('ElevenLabs API Key (saved locally):', cur.key || '');
       if (apiKey === null) return;
-      const voiceId = prompt('Enter ElevenLabs Voice ID:', cur.voice || '');
+      const voiceId = prompt('ElevenLabs Voice ID:', cur.voice || '');
       if (voiceId === null) return;
       setEleven(apiKey.trim(), voiceId.trim());
       showMsg('Saved ElevenLabs settings locally.', 'success');
     });
 
-    // ElevenLabs TTS (downloadable MP3)
+    // ElevenLabs TTS (download)
     async function ttsElevenLabs(text){
       const { key, voice } = getEleven();
-      if (!key || !voice){
-        showMsg('Set your ElevenLabs API Key & Voice ID (⚙️ Settings).', 'error');
-        return;
-      }
+      if (!key || !voice) return showMsg('Set ElevenLabs API + Voice ID.', 'error');
       setBusy(voiceGenBtn, true);
       downloadLink.style.display = 'none';
-      try{
+      try {
         const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'xi-api-key': key
-          },
-          body: JSON.stringify({
-            text,
-            model_id: 'eleven_monolingual_v1',
-            voice_settings: { stability: 0.5, similarity_boost: 0.75 }
-          })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
+          body: JSON.stringify({ text, model_id:'eleven_monolingual_v1', voice_settings:{ stability:0.5, similarity_boost:0.75 } })
         });
-        if (!res.ok){ throw new Error('TTS failed: ' + res.status); }
+        if (!res.ok) throw new Error('TTS failed: ' + res.status);
         const buf = await res.arrayBuffer();
         audioBlob = new Blob([buf], { type:'audio/mpeg' });
         const url = URL.createObjectURL(audioBlob);
         audioPlayer.src = url;
-        await audioPlayer.play();
+        audioPlayer.play();
         downloadLink.href = url;
         downloadLink.style.display = 'block';
-        showMsg('🎧 Voice ready. You can download the MP3.', 'success');
-      }catch(err){
-        console.error(err);
-        showMsg('ElevenLabs error. Check settings/credits and try again.', 'error');
-      }finally{
+        showMsg('🎧 Voice ready—download below.', 'success');
+      } catch(e){
+        console.error(e);
+        showMsg('ElevenLabs error—check settings/credits.', 'error');
+      } finally {
         setBusy(voiceGenBtn, false);
       }
     }
-
-    voiceGenBtn.addEventListener('click', ()=>{
+    voiceGenBtn.addEventListener('click', () => {
       const text = textInput.value.trim();
-      if (!text){ showMsg('Type or generate a script first.', 'error'); return; }
-      if (engineSelect.value === 'browser'){
-        showMsg('Switch engine to “ElevenLabs” for downloadable audio.', 'info');
+      if (!text) return showMsg('Type or generate your script first.', 'error');
+      if (engineSelect.value === 'browser') {
+        showMsg('Switch to ElevenLabs for downloads.', 'info');
         speakBrowser(text);
         return;
       }
       ttsElevenLabs(text);
     });
 
-    // Engine toggle
-    engineSelect.addEventListener('change', ()=>{
-      browserVoiceWrap.style.display = (engineSelect.value === 'browser') ? 'block' : 'none';
-      if (engineSelect.value !== 'browser'){
-        downloadLink.style.display = 'none';
-      }
+    engineSelect.addEventListener('change', () => {
+      browserVoiceWrap.style.display = engineSelect.value === 'browser' ? 'block' : 'none';
+      if (engineSelect.value !== 'browser') downloadLink.style.display = 'none';
     });
     browserVoiceWrap.style.display = 'block';
   </script>
 
-  <!-- Register service worker -->
   <script>
-    if ('serviceWorker' in navigator){
+    if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .catch(err => console.log('SW reg failed:', err));
+        navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW reg failed:', err));
       });
     }
   </script>
