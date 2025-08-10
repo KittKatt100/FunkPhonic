@@ -54,7 +54,7 @@
   <main class="card">
     <header class="text-center">
       <h1 class="text-4xl font-extrabold text-[#DF5086]">FunkPhonic</h1>
-      <p class="mt-1 text-sm text-gray-300">Type a script → choose engine → make it talk → <span class="text-[#24B3A8]">download MP3 (with ElevenLabs)</span></p>
+      <p class="mt-1 text-sm text-gray-300">Type a script → choose engine → make it talk → <span class="text-[#24B3A8]">download MP3 (via ElevenLabs)</span></p>
     </header>
 
     <section>
@@ -75,6 +75,7 @@
         <select id="voice-select" class="w-full"></select>
       </div>
       <div class="tight">
+        <!-- Settings now ONLY asks for optional Voice ID (no API key input) -->
         <button id="settings-btn" class="btn-teal">⚙️ Settings</button>
       </div>
     </section>
@@ -91,16 +92,15 @@
     <pre id="errorDetail"></pre>
 
     <div class="row">
-      <div class="chip">Tip: “Generate Script” writes the copy (demo). “Speak It” = device voice. “Generate Voice” = ElevenLabs + download.</div>
+      <div class="chip">Tip: “Generate Script” writes copy (demo). “Speak It” = device voice. “Generate Voice” = ElevenLabs + download (secure via your Worker).</div>
     </div>
   </main>
 
   <script>
-    // ---------- CONFIG ----------
-    // IMPORTANT: set this to your Cloudflare Worker URL
-    const PROXY_URL = 'https://YOUR-WORKER-NAME.YOURNAME.workers.dev'; // <-- replace
+    // -------- CONFIG: set your backend Worker URL --------
+    const PROXY_URL = 'https://YOUR-WORKER-NAME.YOURNAME.workers.dev'; // <— replace me
 
-    // ---------- Elements ----------
+    // -------- Elements --------
     const textInput = document.getElementById('text-input');
     const engineSelect = document.getElementById('engine-select');
     const voiceSelect = document.getElementById('voice-select');
@@ -116,7 +116,7 @@
     const msg = document.getElementById('msg');
     const errorDetail = document.getElementById('errorDetail');
 
-    // ---------- Audio & voices ----------
+    // -------- Audio & voices --------
     const synth = window.speechSynthesis;
     const audioPlayer = new Audio();
     let voices = [], audioBlob = null;
@@ -141,7 +141,7 @@
       stopBtn.disabled  = spinning && el === voiceGenBtn;
     }
 
-    // ---------- Browser voices ----------
+    // -------- Browser voices --------
     function populateVoices(){
       voices = synth.getVoices().filter(v => v && v.name && v.lang);
       voiceSelect.innerHTML = '';
@@ -164,7 +164,7 @@
     if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
     window.addEventListener('load', populateVoices);
 
-    // ---------- Demo Script Gen ----------
+    // -------- Demo Script Gen --------
     generateBtn.addEventListener('click', ()=>{
       const prompt = textInput.value.trim();
       if (!prompt){ showMsg('Type what kind of script you want first.', 'error'); return; }
@@ -177,7 +177,7 @@
       }, 900);
     });
 
-    // ---------- Browser TTS ----------
+    // -------- Browser TTS --------
     function speakBrowser(text){
       if (!text){ showMsg('Nothing to speak. Type or generate a script.', 'error'); return; }
       if (synth.speaking) synth.cancel();
@@ -202,31 +202,25 @@
       showMsg('⛔ Stopped.', 'info', 1800);
     });
 
-    // ---------- Settings (localStorage) ----------
-    function getCfg(){
-      return {
-        voiceId: localStorage.getItem('eleven_voice_id') || '',
-      };
-    }
+    // -------- Settings (Voice ID only; API key removed) --------
+    function getCfg(){ return { voiceId: localStorage.getItem('eleven_voice_id') || '' }; }
     function setCfg(k, v){ localStorage.setItem(k, v || ''); }
     settingsBtn.addEventListener('click', ()=>{
       const cur = getCfg();
-      const voiceId = prompt('ElevenLabs Voice ID (from Voices → More actions → Copy voice ID):', cur.voiceId || '');
+      const voiceId = prompt('ElevenLabs Voice ID (optional — leave blank to use backend default):', cur.voiceId || '');
       if (voiceId === null) return;
       setCfg('eleven_voice_id', voiceId.trim());
-      showMsg('Saved settings locally.', 'success');
+      showMsg('Saved local settings.', 'success');
     });
 
-    // ---------- ElevenLabs via Proxy ----------
+    // -------- ElevenLabs via Proxy (secure) --------
     async function ttsViaProxy(text, voiceId){
+      const body = { text };
+      if (voiceId) body.voice_id = voiceId; // optional; backend default if omitted
       const res = await fetch(PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text, voice_id: voiceId,
-          model_id: 'eleven_multilingual_v2',
-          output_format: 'mp3_44100_128'
-        })
+        body: JSON.stringify(body)
       });
       if (!res.ok){
         const errTxt = await res.text().catch(()=> '');
@@ -238,8 +232,7 @@
     async function generateElevenLabs(){
       const text = textInput.value.trim();
       if (!text){ showMsg('Type or generate a script first.', 'error'); return; }
-      const { voiceId } = getCfg();
-      if (!voiceId){ showMsg('Set Voice ID in Settings.', 'error'); return; }
+      const { voiceId } = getCfg(); // can be blank; backend will use ELEVEN_VOICE_ID
 
       setBusy(voiceGenBtn, true);
       clearErrorDetail();
@@ -247,8 +240,8 @@
 
       try{
         const buf = await ttsViaProxy(text, voiceId);
-        audioBlob = new Blob([buf], { type:'audio/mpeg' });
-        const url = URL.createObjectURL(audioBlob);
+        const mp3Blob = new Blob([buf], { type:'audio/mpeg' });
+        const url = URL.createObjectURL(mp3Blob);
         audioPlayer.src = url;
         await audioPlayer.play();
         downloadLink.href = url;
@@ -263,6 +256,8 @@
       }
     }
 
+    // Button wire-up
+    const audioPlayer = new Audio();
     voiceGenBtn.addEventListener('click', ()=>{
       if (engineSelect.value === 'browser'){
         showMsg('Switch engine to “ElevenLabs” for downloadable audio.', 'info');
@@ -271,7 +266,6 @@
       }
       generateElevenLabs();
     });
-
     engineSelect.addEventListener('change', ()=>{
       browserVoiceWrap.style.display = engineSelect.value === 'browser' ? 'block' : 'none';
       if (engineSelect.value !== 'browser') downloadLink.style.display = 'none';
