@@ -1,112 +1,164 @@
-// ===== FunkPhonic script.js =====
+// FunkPhonic — Frontend script (talks to Cloudflare Worker backend only)
 
-// If your site is hosted at https://username.github.io/FunkPhonic/
-// set BASE_PATH = '/FunkPhonic'. If it's at the root, leave ''.
-const BASE_PATH = '/FunkPhonic'; // '' or '/FunkPhonic'
+// ----- CONFIG: your backend Worker base -----
+const PROXY_BASE = 'https://funkphonic.funkulture1.workers.dev';
+const CLONE_URL  = PROXY_BASE + '/clone';
+const TTS_URL    = PROXY_BASE + '/tts';
 
-// Your Cloudflare Worker URL (backend proxy). Example:
-// https://funkphonic-tts.yourname.workers.dev
-const PROXY_URL = 'https://YOUR-WORKER-NAME.YOURNAME.workers.dev';
+// ----- Element helpers -----
+const $ = (id) => document.getElementById(id);
 
-// Optional: keep a default Voice ID client-side (you can override per call)
-const DEFAULT_VOICE_ID = localStorage.getItem('funkphonic_voice_id') || '';
+// Required elements (based on your UI)
+const scriptEl   = $('script');       // textarea with the vocal script
+const moodEl     = $('mood');         // select with mood
+const speedEl    = $('speed');        // range for playback rate
+const voiceName  = $('voice-name');   // input text for voice name
+const voiceFile  = $('voice-file');   // input file for audio sample
+const uploadBtn  = $('upload');       // button Upload & Clone
+const genBtn     = $('generate');     // button Generate MP3
+const player     = $('player');       // <audio> element
+const downloadA  = $('download');     // <a> for download
 
-// ---------- Service Worker registration ----------
-(async function registerSW() {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    const swUrl = `${BASE_PATH || ''}/worker.js`;
-    await navigator.serviceWorker.register(swUrl);
-    // Optional: prompt SW to activate immediately after updates
-    if (navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-    }
-  } catch (err) {
-    console.warn('[SW]', err);
+// Optional status elements (if you added them)
+const msgEl      = $('msg');          // div for messages (optional)
+const errEl      = $('err');          // <pre> for errors (optional)
+const upSpin     = $('up-spin');      // spinner beside upload (optional)
+const genSpin    = $('gen-spin');     // spinner beside generate (optional)
+const voiceStatus= $('voice-status'); // small status text (optional)
+const speedLabel = $('speedLabel');   // label showing 1.00x (optional)
+
+// ----- UI helpers -----
+function busy(btn, spin, on = true){
+  if (btn) btn.disabled = on;
+  if (spin) spin.style.visibility = on ? 'visible' : 'hidden';
+}
+function showMsg(text, type = 'info', ms = 3500){
+  if (!msgEl) return console.log(`[${type}]`, text);
+  msgEl.className = 'msg ' + type;
+  msgEl.textContent = text;
+  msgEl.style.display = 'block';
+  if (ms) setTimeout(()=> msgEl.style.display = 'none', ms);
+}
+function showErr(e){
+  const out = typeof e === 'string' ? e : (e?.message || JSON.stringify(e));
+  if (errEl){
+    errEl.style.display = 'block';
+    errEl.textContent = out;
+  } else {
+    console.error(out);
   }
-})();
+}
+function clearErr(){
+  if (errEl){ errEl.style.display = 'none'; errEl.textContent = ''; }
+}
 
-// ---------- Backend call (Cloudflare Worker) ----------
-async function ttsViaProxy({ text, voiceId }) {
-  if (!PROXY_URL) throw new Error('Missing PROXY_URL in script.js');
-  if (!text || !text.trim()) throw new Error('No text provided');
-  const payload = {
-    text: text.trim(),
-    // If a voiceId is passed, use it; otherwise backend can fall back to ENV ELEVEN_VOICE_ID
-    ...(voiceId ? { voice_id: voiceId } : {})
-  };
+// ----- Voice ID (local storage) -----
+const setVoiceId = (id) => localStorage.setItem('eleven_voice_id', id || '');
+const getVoiceId = () => localStorage.getItem('eleven_voice_id') || '';
+function refreshVoiceStatus(){
+  if (!voiceStatus) return;
+  const id = getVoiceId();
+  voiceStatus.textContent = id ? `Voice ready (id: ${id.slice(0,8)}…)` : 'No voice uploaded yet.';
+}
+refreshVoiceStatus();
 
-  const res = await fetch(PROXY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+// ----- Speed label + audio playback rate -----
+if (speedEl){
+  speedEl.addEventListener('input', ()=>{
+    const val = Number(speedEl.value);
+    if (speedLabel) speedLabel.textContent = `${val.toFixed(2)}×`;
+    if (player) player.playbackRate = val;
   });
-
-  if (!res.ok) {
-    const errTxt = await res.text().catch(() => '');
-    throw new Error(`Proxy ${res.status}: ${errTxt || 'unknown error'}`);
-  }
-
-  const buf = await res.arrayBuffer();
-  return new Blob([buf], { type: 'audio/mpeg' });
 }
 
-// ---------- Helpers ----------
-function playBlob(blob) {
-  const url = URL.createObjectURL(blob);
-  const audio = new Audio(url);
-  audio.play().catch(() => {/* autoplay might be blocked; user can click */});
-  return url; // return so we can also offer a download link
-}
+// ----- Upload & Clone -----
+if (uploadBtn){
+  uploadBtn.addEventListener('click', async ()=>{
+    const name = (voiceName?.value || '').trim();
+    const file = voiceFile?.files && voiceFile.files[0];
+    if (!name){ showMsg('Name your voice.', 'error'); return; }
+    if (!file){ showMsg('Choose an audio file.', 'error'); return; }
 
-function attachDownload(url, fileName = 'funkphonic-voice.mp3') {
-  const a = document.getElementById('download-link');
-  if (!a) return;
-  a.href = url;
-  a.download = fileName;
-  a.style.display = 'block';
-}
+    busy(uploadBtn, upSpin, true); clearErr();
+    try{
+      const fd = new FormData();
+      fd.append('name', name);
+      fd.append('file', file, file.name);
 
-// Save/get Voice ID locally (optional UI hook)
-function saveVoiceId(id) {
-  if (!id) return;
-  localStorage.setItem('funkphonic_voice_id', id);
-}
-function getVoiceId() {
-  return localStorage.getItem('funkphonic_voice_id') || DEFAULT_VOICE_ID;
-}
+      const res = await fetch(CLONE_URL, { method:'POST', body: fd });
+      const txt = await res.text();
+      if (!res.ok) throw new Error(txt || `Clone failed (${res.status})`);
 
-// ---------- Optional: wire up to your existing UI ----------
-(function wireUI() {
-  const genVoiceBtn = document.getElementById('voicegen-btn');
-  const textInput   = document.getElementById('text-input');
-
-  if (!genVoiceBtn || !textInput) return; // if your page uses different IDs, no crash
-
-  genVoiceBtn.addEventListener('click', async () => {
-    try {
-      genVoiceBtn.disabled = true;
-      const text = textInput.value || '';
-      const voiceId = getVoiceId(); // you can set this elsewhere in your UI
-
-      const mp3Blob = await ttsViaProxy({ text, voiceId });
-      const url = playBlob(mp3Blob);
-      attachDownload(url);
-    } catch (e) {
-      console.error('[FunkPhonic] TTS error:', e);
-      alert(e.message || 'TTS failed');
-    } finally {
-      genVoiceBtn.disabled = false;
+      let data = {};
+      try { data = JSON.parse(txt); } catch {}
+      const vid = (data.voice_id || data?.voice?.voice_id || '').toString();
+      if (!vid) throw new Error('Clone succeeded but no voice_id returned.');
+      setVoiceId(vid);
+      refreshVoiceStatus();
+      showMsg('✅ Voice cloned and stored.', 'success');
+    }catch(e){
+      showMsg('Upload failed. See details below.', 'error', 7000);
+      showErr(e);
+    }finally{
+      busy(uploadBtn, upSpin, false);
     }
   });
-})();
+}
 
-// ---------- Expose minimal API for custom UIs ----------
-window.FunkPhonic = {
-  tts: ttsViaProxy,
-  playBlob,
-  attachDownload,
-  saveVoiceId,
-  getVoiceId
-};
+// ----- Generate MP3 via backend (/tts) -----
+if (genBtn){
+  genBtn.addEventListener('click', async ()=>{
+    const text = (scriptEl?.value || '').trim();
+    if (!text){ showMsg('Type your vocal script first.', 'error'); return; }
 
+    busy(genBtn, genSpin, true); clearErr();
+    if (downloadA){ downloadA.classList.add('hidden'); }
+    if (player){ player.removeAttribute('src'); }
+
+    try{
+      const body = { text };
+      const vid = getVoiceId();
+      if (vid) body.voice_id = vid;      // else backend uses ELEVEN_VOICE_ID
+      if (moodEl && moodEl.value) body.mood = moodEl.value; // optional mood
+
+      const res = await fetch(TTS_URL, {
+        method:'POST',
+        headers:{ 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok){
+        const t = await res.text().catch(()=> '');
+        throw new Error(t || `TTS failed (${res.status})`);
+      }
+
+      const buf = await res.arrayBuffer();
+      const blob = new Blob([buf], { type:'audio/mpeg' });
+      const url  = URL.createObjectURL(blob);
+
+      if (player){
+        player.src = url;
+        if (speedEl) player.playbackRate = Number(speedEl.value || 1);
+        try { await player.play(); } catch {}
+      }
+      if (downloadA){
+        downloadA.href = url;
+        downloadA.classList.remove('hidden');
+      }
+      showMsg('🎧 MP3 ready — download below.', 'success');
+    }catch(e){
+      showMsg('Generation error. See details below.', 'error', 7000);
+      showErr(e);
+    }finally{
+      busy(genBtn, genSpin, false);
+    }
+  });
+}
+
+// ----- Optional: register your PWA SW (frontend service worker) -----
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    // If you have a frontend worker.js (for caching/offline), keep this file in repo root.
+    navigator.serviceWorker.register('./worker.js').catch(()=>{});
+  });
+}
