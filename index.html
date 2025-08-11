@@ -2,262 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>FunkPhonic</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="manifest" href="manifest.json"/>
   <meta name="theme-color" content="#7A1FA2"/>
-
   <style>
-    :root{
-      --bg:#151515; --fg:#ffffff;
-      --purple:#7A1FA2; --orange:#FF7227;
-      --heli:#DF5086; --teal:#24B3A8;
-    }
-    body{ background:var(--bg); color:var(--fg); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; min-height:100vh; margin:0; display:flex; align-items:center; justify-content:center; padding:24px; }
+    :root{ --bg:#151515; --fg:#fff; --purple:#7A1FA2; --heli:#DF5086; --teal:#24B3A8; --orange:#FF7227; }
+    body{ background:var(--bg); color:var(--fg); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
     .card{ width:100%; max-width:820px; background:#1a1a1a; border:1px solid var(--teal); border-radius:20px; box-shadow:0 0 24px rgba(36,179,168,.25); padding:28px; display:flex; flex-direction:column; gap:18px; }
-    textarea{ background:#242424; color:#fff; border:2px solid var(--purple); border-radius:12px; padding:14px; min-height:140px; resize:vertical; outline:none; }
-    button, .btn{ background:var(--purple); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:700; box-shadow:0 0 10px rgba(122,31,162,.4); transition:.2s transform,.2s background; }
+    textarea,input[type="text"]{ background:#242424; color:#fff; border:2px solid var(--purple); border-radius:12px; padding:12px; outline:none; }
+    input[type="file"]{ color:#ddd; }
+    button{ background:var(--purple); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:700; box-shadow:0 0 10px rgba(122,31,162,.35); transition:.2s; }
     button:hover{ transform:translateY(-2px); }
-    .btn-orange{ background:var(--orange); } .btn-orange:hover{ background:#e25f17; }
-    .btn-teal{ background:var(--teal); } .btn-teal:hover{ background:#1ea197; }
-    .spinner{ border:4px solid rgba(255,255,255,.25); border-left-color:var(--teal); width:22px;height:22px;border-radius:50%; animation:spin 1s linear infinite; display:inline-block; vertical-align:middle; margin-left:8px; visibility:hidden; }
+    .btn-teal{ background:var(--teal); } .btn-orange{ background:var(--orange); }
+    .spinner{ border:4px solid rgba(255,255,255,.25); border-left-color:var(--teal); width:20px; height:20px; border-radius:50%; animation:spin 1s linear infinite; display:inline-block; margin-left:8px; visibility:hidden; }
     @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
     .msg{ display:none; padding:12px 14px; border-radius:12px; text-align:center; font-weight:600; }
     .msg.info{ background:#17324d; color:#cfe9ff; } .msg.error{ background:#4d1717; color:#ffd0d0; } .msg.success{ background:#0f3a33; color:#bff1ea; }
-    .row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
-    .row > *{ flex:1 1 auto; }
-    .tight{ flex:0 0 auto; }
     .hint{ font-size:12px; color:#aaa; }
   </style>
 </head>
 <body>
   <main class="card">
     <header class="text-center">
-      <h1 class="text-4xl font-extrabold text-[#DF5086]">FunkPhonic</h1>
-      <p class="mt-1 text-sm text-gray-300">1) Write a script → 2) Upload your voice → 3) Generate & Download MP3</p>
+      <h1 class="text-4xl font-extrabold" style="color:#DF5086">FunkPhonic</h1>
+      <p class="mt-1 text-sm text-gray-300">Write the script → Upload voice (once) → Generate & Download MP3</p>
     </header>
 
-    <!-- Step 1: Script -->
+    <!-- Script -->
     <section>
-      <label class="block mb-2 text-sm text-gray-300">Your script</label>
-      <textarea id="text-input" placeholder="e.g., A tight 20-second ad for Funkulture’s Heliconia candles. Confident, playful, punchy CTA."></textarea>
-      <div class="row">
-        <button id="generate-btn" class="btn-orange">✨ Generate Script <span id="gen-spinner" class="spinner"></span></button>
-        <div class="hint">Script helper is a demo; you can edit freely.</div>
-      </div>
+      <label class="block mb-2 text-sm text-gray-300">Vocal script</label>
+      <textarea id="script" placeholder="Type exactly what the voice should say..." rows="8"></textarea>
     </section>
 
-    <!-- Step 2: Voice -->
+    <!-- Upload/clone (one-time) -->
     <section>
-      <h3 class="text-lg font-bold mb-2">Upload your voice (once)</h3>
-      <div class="row">
-        <input id="voice-name" placeholder="Voice name (e.g., Elitha)" class="w-full" style="background:#242424;border:1px solid #333;border-radius:12px;padding:10px"/>
-        <input id="voice-file" type="file" accept="audio/*" class="w-full" style="background:#242424;border:1px solid #333;border-radius:12px;padding:10px"/>
-        <div class="tight">
-          <button id="upload-btn" class="btn-teal">⬆️ Upload & Clone <span id="up-spinner" class="spinner"></span></button>
-        </div>
+      <label class="block mb-2 text-sm text-gray-300">Upload a voice sample (one-time)</label>
+      <div class="flex flex-wrap gap-3 items-center">
+        <input id="voice-name" type="text" placeholder="Voice name (e.g., Elitha)" class="flex-1 min-w-[200px]"/>
+        <input id="voice-file" type="file" accept="audio/*" class="flex-1 min-w-[200px]"/>
+        <button id="upload" class="btn-teal">⬆️ Upload & Clone <span id="up-spin" class="spinner"></span></button>
       </div>
-      <div class="hint" id="voice-status">No voice uploaded yet.</div>
+      <div id="voice-status" class="hint mt-2">No voice uploaded yet.</div>
     </section>
 
-    <!-- Optional device preview -->
-    <section>
-      <h3 class="text-lg font-bold mb-2">Quick preview (device voice)</h3>
-      <div class="row">
-        <select id="voice-select" class="w-full" style="background:#242424;border:1px solid #333;border-radius:12px;padding:10px"></select>
-        <div class="tight"><button id="speak-btn" class="btn">🗣️ Speak</button></div>
-        <div class="tight"><button id="stop-btn" class="btn">⛔ Stop</button></div>
-      </div>
-      <div id="no-voices" class="hint" style="display:none;">No device voices found here. It’s optional — MP3 generation still works below.</div>
-    </section>
-
-    <!-- Step 3: Generate -->
-    <section class="row">
-      <button id="voicegen-btn" class="btn-teal">🎧 Generate in My Voice (MP3) <span id="tts-spinner" class="spinner"></span></button>
-      <a id="download-link" class="btn" href="#" download="funkphonic-voice.mp3" style="display:none;">⬇️ Download Audio</a>
+    <!-- Generate -->
+    <section class="flex flex-wrap gap-3 items-center">
+      <button id="generate" class="btn-orange">🎧 Generate MP3 <span id="gen-spin" class="spinner"></span></button>
+      <a id="download" class="hidden px-4 py-3 rounded-xl" style="background:#24B3A8;color:#111;font-weight:800;text-decoration:none" download="funkphonic.mp3">⬇️ Download MP3</a>
+      <audio id="player" controls class="flex-1 min-w-[240px]"></audio>
     </section>
 
     <div id="msg" class="msg info"></div>
-    <pre id="errorDetail" style="display:none;background:#2a2a2a;color:#ffe;padding:10px;border-radius:10px;font-size:12px;"></pre>
+    <pre id="err" style="display:none;background:#2a2a2a;color:#ffe;padding:10px;border-radius:10px;font-size:12px;"></pre>
   </main>
 
   <script>
-    // ---- CONFIG ----
-    const PROXY_BASE = 'https://YOUR-WORKER-NAME.YOURNAME.workers.dev'; // <-- replace with your Worker base URL
+    // ===== CONFIG: set your backend Worker base URL =====
+    const PROXY_BASE = 'https://YOUR-WORKER-NAME.YOURNAME.workers.dev'; // <-- replace with your Worker
     const CLONE_URL = PROXY_BASE + '/clone';
     const TTS_URL   = PROXY_BASE + '/tts';
 
-    // ---- Elements ----
-    const textInput = document.getElementById('text-input');
-    const generateBtn = document.getElementById('generate-btn');
-    const genSpinner = document.getElementById('gen-spinner');
+    // ===== Elements =====
+    const $ = id => document.getElementById(id);
+    const scriptEl = $('script');
+    const voiceName = $('voice-name');
+    const voiceFile = $('voice-file');
+    const uploadBtn = $('upload');
+    const upSpin = $('up-spin');
+    const voiceStatus = $('voice-status');
+    const genBtn = $('generate');
+    const genSpin = $('gen-spin');
+    const downloadA = $('download');
+    const player = $('player');
+    const msg = $('msg');
+    const err = $('err');
 
-    const voiceName = document.getElementById('voice-name');
-    const voiceFile = document.getElementById('voice-file');
-    const uploadBtn = document.getElementById('upload-btn');
-    const upSpinner = document.getElementById('up-spinner');
-    const voiceStatus = document.getElementById('voice-status');
+    // ===== Helpers =====
+    const busy = (btn, spin, on=true) => { if(btn) btn.disabled=on; if(spin) spin.style.visibility = on ? 'visible':'hidden'; }
+    const showMsg = (text,type='info',ms=3500)=>{ msg.className='msg '+type; msg.textContent=text; msg.style.display='block'; if(ms) setTimeout(()=>msg.style.display='none',ms); }
+    const showErr = (e)=>{ err.style.display='block'; err.textContent = typeof e==='string'?e:(e?.message||JSON.stringify(e)); }
+    const clearErr= ()=>{ err.style.display='none'; err.textContent=''; }
+    const setVoiceId = id => localStorage.setItem('eleven_voice_id', id||'');
+    const getVoiceId = () => localStorage.getItem('eleven_voice_id') || '';
 
-    const voiceSelect = document.getElementById('voice-select');
-    const noVoices = document.getElementById('no-voices');
-    const speakBtn = document.getElementById('speak-btn');
-    const stopBtn = document.getElementById('stop-btn');
-
-    const voiceGenBtn = document.getElementById('voicegen-btn');
-    const ttsSpinner = document.getElementById('tts-spinner');
-    const downloadLink = document.getElementById('download-link');
-
-    const msg = document.getElementById('msg');
-    const errorDetail = document.getElementById('errorDetail');
-
-    // ---- UI helpers ----
-    function showMsg(text, type='info', timeout=4500){
-      msg.className = 'msg ' + type;
-      msg.textContent = text;
-      msg.style.display = 'block';
-      if (timeout) setTimeout(()=> msg.style.display='none', timeout);
-    }
-    function showErrorDetail(obj){
-      errorDetail.style.display = 'block';
-      try { errorDetail.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2); }
-      catch { errorDetail.textContent = String(obj); }
-    }
-    function clearErrorDetail(){ errorDetail.style.display='none'; errorDetail.textContent=''; }
-    function busy(el, spinEl, on=true){ if (el) el.disabled = on; if (spinEl) spinEl.style.visibility = on ? 'visible' : 'hidden'; }
-
-    // ---- Local voice_id storage ----
-    function setVoiceId(id){ localStorage.setItem('eleven_voice_id', id || ''); }
-    function getVoiceId(){ return localStorage.getItem('eleven_voice_id') || ''; }
-    function updateVoiceStatus(){
+    const refreshVoiceStatus = ()=>{
       const id = getVoiceId();
       voiceStatus.textContent = id ? `Voice ready (id: ${id.slice(0,8)}…)` : 'No voice uploaded yet.';
-    }
-    updateVoiceStatus();
+    };
+    refreshVoiceStatus();
 
-    // ---- Device preview voices (optional) ----
-    const synth = window.speechSynthesis;
-    let deviceVoices = [];
-    function populateVoices(){
-      deviceVoices = synth.getVoices().filter(v => v && v.name && v.lang);
-      voiceSelect.innerHTML = '';
-      if (!deviceVoices.length){ noVoices.style.display = 'block'; return; }
-      noVoices.style.display = 'none';
-      deviceVoices.forEach(v=>{
-        const opt = document.createElement('option');
-        opt.value = v.name;
-        opt.textContent = `${v.name} (${v.lang})${v.default ? ' • default' : ''}`;
-        voiceSelect.appendChild(opt);
-      });
-      const preferred = deviceVoices.find(v => v.name.includes('Google')) || deviceVoices.find(v => v.lang.startsWith('en')) || deviceVoices[0];
-      if (preferred) voiceSelect.value = preferred.name;
-    }
-    if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
-    window.addEventListener('load', populateVoices);
-
-    function speakBrowser(text){
-      if (!text){ showMsg('Nothing to speak. Type a script.', 'error'); return; }
-      if (synth.speaking) synth.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      const selected = deviceVoices.find(v => v.name === voiceSelect.value);
-      if (selected) u.voice = selected;
-      u.onend = ()=> showMsg('✅ Done speaking.', 'success');
-      u.onerror = e => showMsg('Speech error: ' + (e.error||'unknown'), 'error');
-      synth.speak(u);
-      downloadLink.style.display = 'none';
-    }
-
-    speakBtn.addEventListener('click', ()=> speakBrowser(textInput.value.trim()));
-    stopBtn.addEventListener('click', ()=> { if (synth.speaking) synth.cancel(); showMsg('⛔ Stopped.', 'info', 1800); });
-
-    // ---- Script generator (demo) ----
-    generateBtn.addEventListener('click', ()=>{
-      const prompt = textInput.value.trim();
-      if (!prompt){ showMsg('Tell me what kind of script you want first.', 'error'); return; }
-      busy(generateBtn, genSpinner, true); clearErrorDetail();
-      setTimeout(()=>{
-        textInput.value = `${prompt}\n\n[FunkPhonic draft]\n• Open strong\n• One benefit per line\n• Punchy CTA at the end.`;
-        busy(generateBtn, genSpinner, false);
-        showMsg('✨ Script generated (demo).', 'success');
-      }, 900);
-    });
-
-    // ---- Upload & Clone voice ----
+    // ===== Upload & Clone =====
     uploadBtn.addEventListener('click', async ()=>{
-      const name = (voiceName.value || '').trim();
+      const name = (voiceName.value||'').trim();
       const file = voiceFile.files && voiceFile.files[0];
-      if (!name){ showMsg('Give your voice a name.', 'error'); return; }
-      if (!file){ showMsg('Choose an audio file.', 'error'); return; }
+      if(!name){ showMsg('Name your voice.', 'error'); return; }
+      if(!file){ showMsg('Choose an audio file.', 'error'); return; }
 
-      busy(uploadBtn, upSpinner, true); clearErrorDetail();
+      busy(uploadBtn, upSpin, true); clearErr();
       try{
         const fd = new FormData();
         fd.append('name', name);
         fd.append('file', file, file.name);
         const res = await fetch(CLONE_URL, { method:'POST', body: fd });
-        const text = await res.text();
-        if (!res.ok) throw new Error(text || `Clone failed (${res.status})`);
-        let data = {};
-        try { data = JSON.parse(text); } catch {}
-        const voiceId = (data.voice_id || (data.voice && data.voice.voice_id) || '').toString();
-        if (!voiceId) throw new Error('Clone succeeded but no voice_id returned.');
-        setVoiceId(voiceId);
-        updateVoiceStatus();
-        showMsg('✅ Voice cloned. Ready to generate.', 'success');
-      }catch(e){
-        console.error(e);
-        showMsg('Voice upload failed. See details below.', 'error', 7000);
-        showErrorDetail(e.message || e);
-      }finally{
-        busy(uploadBtn, upSpinner, false);
-      }
+        const txt = await res.text();
+        if(!res.ok) throw new Error(txt || `Clone failed (${res.status})`);
+        let data={}; try{ data=JSON.parse(txt);}catch{}
+        const vid = (data.voice_id || data?.voice?.voice_id || '').toString();
+        if(!vid) throw new Error('Clone succeeded but no voice_id returned.');
+        setVoiceId(vid);
+        refreshVoiceStatus();
+        showMsg('✅ Voice cloned and stored.', 'success');
+      }catch(e){ showMsg('Upload failed. See details below.', 'error', 7000); showErr(e); }
+      finally{ busy(uploadBtn, upSpin, false); }
     });
 
-    // ---- Generate MP3 via backend /tts ----
-    voiceGenBtn.addEventListener('click', async ()=>{
-      const text = textInput.value.trim();
-      if (!text){ showMsg('Type or generate a script first.', 'error'); return; }
-      busy(voiceGenBtn, ttsSpinner, true); clearErrorDetail(); downloadLink.style.display = 'none';
+    // ===== Generate MP3 =====
+    genBtn.addEventListener('click', async ()=>{
+      const text = scriptEl.value.trim();
+      if(!text){ showMsg('Type your vocal script first.', 'error'); return; }
+      busy(genBtn, genSpin, true); clearErr(); downloadA.classList.add('hidden'); player.removeAttribute('src');
 
       try{
         const body = { text };
         const vid = getVoiceId();
-        if (vid) body.voice_id = vid; // else backend default ELEVEN_VOICE_ID will be used
+        if (vid) body.voice_id = vid; // else backend must have ELEVEN_VOICE_ID
 
         const res = await fetch(TTS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
           body: JSON.stringify(body)
         });
-
-        if (!res.ok){
-          const errTxt = await res.text().catch(()=> '');
-          throw new Error(errTxt || `TTS failed (${res.status})`);
+        if(!res.ok){
+          const t = await res.text().catch(()=> '');
+          throw new Error(t || `TTS failed (${res.status})`);
         }
-
         const buf = await res.arrayBuffer();
-        const mp3Blob = new Blob([buf], { type:'audio/mpeg' });
-        const url = URL.createObjectURL(mp3Blob);
+        const blob = new Blob([buf], { type:'audio/mpeg' });
+        const url  = URL.createObjectURL(blob);
 
-        // autoplay may be blocked; provide download either way
-        const audio = new Audio(url);
-        audio.play().catch(()=>{});
-        downloadLink.href = url;
-        downloadLink.style.display = 'block';
-        showMsg('🎧 Voice ready — download below.', 'success');
-      }catch(e){
-        console.error(e);
-        showMsg('TTS error. See details below.', 'error', 7000);
-        showErrorDetail(e.message || e);
-      }finally{
-        busy(voiceGenBtn, ttsSpinner, false);
-      }
+        player.src = url;
+        try{ await player.play(); }catch{}
+        downloadA.href = url;
+        downloadA.classList.remove('hidden');
+        showMsg('🎧 MP3 ready — download below.', 'success');
+      }catch(e){ showMsg('Generation error. See details below.', 'error', 7000); showErr(e); }
+      finally{ busy(genBtn, genSpin, false); }
     });
 
-    // ---- Register FRONTEND service worker (worker.js) ----
-    if ('serviceWorker' in navigator){
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./worker.js').catch(err => console.log('SW reg failed:', err));
+    // ===== (Optional) register your PWA SW if you still use frontend worker.js =====
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', ()=> {
+        navigator.serviceWorker.register('./worker.js').catch(()=>{});
       });
     }
   </script>
